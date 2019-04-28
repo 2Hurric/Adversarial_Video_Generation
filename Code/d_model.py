@@ -5,6 +5,7 @@ from skimage.transform import resize
 from d_scale_model import DScaleModel
 from loss_functions import adv_loss
 import constants as c
+import time
 
 
 # noinspection PyShadowingNames
@@ -54,7 +55,7 @@ class DiscriminatorModel:
             ##
 
             self.scale_nets = []
-            for scale_num in xrange(self.num_scale_nets):
+            for scale_num in range(self.num_scale_nets):
                 with tf.name_scope('scale_net_' + str(scale_num)):
                     scale_factor = 1. / 2 ** ((self.num_scale_nets - 1) - scale_num)
                     self.scale_nets.append(DScaleModel(scale_num,
@@ -66,7 +67,7 @@ class DiscriminatorModel:
 
             # A list of the prediction tensors for each scale network
             self.scale_preds = []
-            for scale_num in xrange(self.num_scale_nets):
+            for scale_num in range(self.num_scale_nets):
                 self.scale_preds.append(self.scale_nets[scale_num].preds)
 
             ##
@@ -89,8 +90,8 @@ class DiscriminatorModel:
                                                         name='train_op')
 
                 # add summaries to visualize in TensorBoard
-                loss_summary = tf.scalar_summary('loss_D', self.global_loss)
-                self.summaries = tf.merge_summary([loss_summary])
+                loss_summary = tf.summary.scalar('loss_D', self.global_loss)
+                self.summaries = tf.summary.merge([loss_summary])
 
     def build_feed_dict(self, input_frames, gt_output_frames, generator):
         """
@@ -120,7 +121,7 @@ class DiscriminatorModel:
         ##
         # Create discriminator feed dict
         ##
-        for scale_num in xrange(self.num_scale_nets):
+        for scale_num in range(self.num_scale_nets):
             scale_net = self.scale_nets[scale_num]
 
             # resize gt_output_frames
@@ -169,19 +170,33 @@ class DiscriminatorModel:
         ##
 
         feed_dict = self.build_feed_dict(input_frames, gt_output_frames, generator)
+        # print(len(feed_dict))
+        # print(time.time())
+        # print(self.train_op)
+        # print(self.global_loss)
+        # print(self.global_step)
+        #print(self.summaries)
 
         _, global_loss, global_step, summaries = self.sess.run(
             [self.train_op, self.global_loss, self.global_step, self.summaries],
             feed_dict=feed_dict)
 
+        # _, gl, gs, su = self.sess.run(
+        #     [self.global_loss, self.train_op, self.global_step, self.summaries],
+        #     feed_dict=feed_dict)
+
+
         ##
         # User output
         ##
+        # global_step = 0
+        # global_loss = 0
+        # summaries = 0
 
         if global_step % c.STATS_FREQ == 0:
-            print 'DiscriminatorModel: step %d | global loss: %f' % (global_step, global_loss)
+            print('DiscriminatorModel: step %d | global loss: %f' % (global_step, global_loss))
         if global_step % c.SUMMARY_FREQ == 0:
-            print 'DiscriminatorModel: saved summaries'
+            print('DiscriminatorModel: saved summaries')
             self.summary_writer.add_summary(summaries, global_step)
 
-        return global_step
+        return global_loss

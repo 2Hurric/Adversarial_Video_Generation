@@ -7,14 +7,22 @@ def w(shape, stddev=0.01):
     @return A weight layer with the given shape and standard deviation. Initialized with a
             truncated normal distribution.
     """
-    return tf.Variable(tf.truncated_normal(shape, stddev=stddev))
+    #print(shape)
+    shape2 = []
+    for i in shape:
+        shape2.append(int(i))
+    return tf.Variable(tf.truncated_normal(shape2, stddev=stddev))
 
 
 def b(shape, const=0.1):
     """
     @return A bias layer with the given shape.
+
     """
-    return tf.Variable(tf.constant(const, shape=shape))
+    shape2 = []
+    for i in shape:
+        shape2.append(int(i))
+    return tf.Variable(tf.constant(const, shape=shape2))
 
 
 def conv_out_size(i, p, k, s):
